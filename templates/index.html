@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pomodoro Timer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-image: url("https://i.pinimg.com/474x/1e/6d/d4/1e6dd4d76112ababaadba6ef9006d3e3.jpg");
+            background-size: cover;
+            background-position: center;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 40px 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: 380px;
+            backdrop-filter: blur(8px);
+        }
+
+        h1 {
+            color: #ff6347;
+            margin-bottom: 20px;
+            font-size: 2.2em;
+        }
+
+        .clock {
+            font-size: 52px;
+            margin: 20px 0;
+            font-weight: bold;
+            color: #111;
+            letter-spacing: 2px;
+        }
+
+        p {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+
+        form button {
+            background-color: #ff6347;
+            color: #fff;
+            border: none;
+            padding: 12px 20px;
+            margin: 8px 5px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        form button:hover {
+            background-color: #e5533f;
+            transform: scale(1.05);
+        }
+
+        .footer {
+            margin-top: 25px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .flash-message {
+            background-color: #ffe6e6;
+            color: #cc0000;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 🔔 Bell Sound -->
+    <audio id="alarmSound" src="{{ url_for('static', filename='bell-sound.mp3') }}" preload="auto"></audio>
+
+    <div class="container">
+        <h1>🍅 Pomodoro Timer</h1>
+
+        <!-- 🔔 Flash Messages -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flash-message">
+                    {% for message in messages %}
+                        {{ message }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <h2>Mode: {{ mode }}</h2>
+        <div class="clock" id="countdown">--:--</div>
+        <p>✅ Sessions Completed: <strong>{{ sessions }}</strong></p>
+
+        <form method="post">
+            <button name="action" value="start_work">Start Work</button>
+            <button name="action" value="start_break">Start Break</button>
+            <button name="action" value="start_long_break">Long Break</button>
+            <button name="action" value="complete">Complete Session</button>
+            <button name="action" value="end_session">End Session</button>
+        </form>
+
+        <div class="footer">
+            Built with ❤️ using Flask
+        </div>
+    </div>
+
+    <!-- ⏱ Timer Script -->
+    <script>
+        let timeLeft = {{ time }};
+        const clockEl = document.getElementById('countdown');
+        const alarmSound = document.getElementById('alarmSound');
+        const sessionRunning = {{ session_running | lower }};  // true or false
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function updateClock() {
+            if (timeLeft >= 0) {
+                clockEl.textContent = formatTime(timeLeft);
+                if (timeLeft === 0) {
+                    alarmSound.play();
+                } else {
+                    timeLeft--;
+                    setTimeout(updateClock, 1000);
+                }
+            }
+        }
+
+        // Start only if the session is active
+        if (sessionRunning && timeLeft > 0) {
+            updateClock();
+        } else {
+            clockEl.textContent = formatTime(timeLeft);
+        }
+    </script>
+</body>
+</html>
